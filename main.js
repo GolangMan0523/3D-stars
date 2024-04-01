@@ -54,7 +54,7 @@ loader.load(
         scene.add(dirLight2);
 
         // Create a Plane
-        scene.add(createPlane({ x: 0, y: 0, z: -5, width: 50, height: 30, isDisableWireframe: true, color: "lightgreen", transparency: 0.5, }))
+        scene.add(createPlane({ x: 0, y: -10, z: -5, width: 100, height: 100, isDisableWireframe: true, color: "lightgreen", transparency: 0.5, }))
 
         // Get the loaded model
         model = gltf.scene;
@@ -132,7 +132,7 @@ const createStar = ({ centerX, centerY, centerZ, scale, color, rotation, animati
 
     // Scale the model
     var scaleFactor = scale; // Scale factor
-    cloneModel.scale.set(scaleFactor, scaleFactor, scaleFactor * 0.5);
+    cloneModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
     cloneModel.position.set(centerX, centerY, centerZ);
     cloneModel.rotation.set(0, 0, rotation);
 
@@ -154,6 +154,8 @@ const createPlane = ({ x, y, z, width, height, isDisableWireframe, color, transp
     planeMesh.position.x = x
     planeMesh.position.y = y
     planeMesh.position.z = z
+
+    planeMesh.rotation.x = Math.PI / 2
     return planeMesh;
 }
 
