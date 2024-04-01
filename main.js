@@ -18,10 +18,10 @@ const customRandom = (range, isNegative) => {
         (Math.random() * 100000000) % range
 }
 
-for (let i = 0; i < 5000; i++) {
-    const centerX = customRandom(200, true)
-    const centerY = customRandom(100, true)
-    const centerZ = customRandom(50, true)
+for (let i = 0; i < 500; i++) {
+    const centerX = customRandom(100, true)
+    const centerY = customRandom(80, true)
+    const centerZ = customRandom(20, true)
     const animation = customRandom(5, true)
     const randomScale = customRandom(10, true)
     const randomIndex = Math.floor(customRandom(6, false));
@@ -33,7 +33,7 @@ for (let i = 0; i < 5000; i++) {
 let loader = new GLTFLoader();
 let model;
 loader.load(
-    '/public/static/star.glb',
+    '/static/star.glb',
     function (gltf) {
         // To create a scene, use the Scene class:
         scene = new THREE.Scene()
