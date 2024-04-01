@@ -95,10 +95,21 @@ loader.load(
 
         // Animation
         const tick = () => {
+            let cameraPosition = camera.position;
             models.forEach((model, i) => {
                 // mesh.rotation.x += stars[i].animation
                 // mesh.rotation.y += stars[i].animation
-                model.rotation.z += stars[i].animation
+                // model.rotation.z += stars[i].animation
+                let modelPosition = model.position;
+                let distance = cameraPosition.distanceTo(modelPosition);
+                let boundingBox = new THREE.Box3().setFromObject(model);
+                let length = boundingBox.max.x - boundingBox.min.x;
+                if (distance < length) {
+                    model.visible = false
+                } else {
+                    model.visible = true
+                }
+                // console.log(length);
             });
             controls.update();
             renderer.render(scene, camera)
