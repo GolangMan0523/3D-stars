@@ -3,11 +3,10 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 let camera, scene, renderer;
+let loader = new GLTFLoader();
+let model;
 
-const stars = [
-    // { centerX: 0, centerY: 0, centerZ: 0.2, scale: 3, color: "red", rotation: 10, animation: 0.01 },
-    // { centerX: 3, centerY: 3, centerZ: 0.2, scale: 3, color: "red", rotation: 10, animation: 0.01 },
-]
+const stars = []
 
 const colors = ["red", "blue", "green", "white", "lightblue", "lightgreen"]
 
@@ -30,8 +29,6 @@ for (let i = 0; i < 500; i++) {
     )
 }
 
-let loader = new GLTFLoader();
-let model;
 loader.load(
     '/static/star.glb',
     function (gltf) {
@@ -109,7 +106,6 @@ loader.load(
                 } else {
                     model.visible = true
                 }
-                // console.log(length);
             });
             controls.update();
             renderer.render(scene, camera)
@@ -132,7 +128,6 @@ const createStar = ({ centerX, centerY, centerZ, scale, color, rotation, animati
     // Change color of the model
     cloneModel.traverse(function (child) {
         if (child.isMesh) {
-            // child.material.color = newColor;
             child.material = new THREE.MeshStandardMaterial({
                 color: color,
                 roughness: 0.6,
@@ -151,8 +146,7 @@ const createStar = ({ centerX, centerY, centerZ, scale, color, rotation, animati
     return cloneModel
 }
 
-
-//// ---  Create Plane function 
+// --- 2. Create Plane function 
 const createPlane = ({ x, y, z, width, height, isDisableWireframe, color, transparency, map }) => {
     // Create a plane geometry
     const planeGeometry = new THREE.PlaneGeometry(width, height, 32, 32); // Width, Height, Width segments, Height segments
@@ -170,14 +164,10 @@ const createPlane = ({ x, y, z, width, height, isDisableWireframe, color, transp
     return planeMesh;
 }
 
-
 const onWindowResize = () => {
-
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-
     renderer.setSize(window.innerWidth, window.innerHeight);
-
 }
 
 window.addEventListener('resize', onWindowResize);
