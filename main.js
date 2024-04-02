@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import bg from '/static/videoImg.png'
 
 let camera, scene, renderer;
 let loader = new GLTFLoader();
@@ -28,6 +29,8 @@ for (let i = 0; i < 500; i++) {
         { centerX: centerX, centerY: centerY, centerZ: centerZ, scale: randomScale, color: colors[randomIndex], rotation: 10, animation: 0.005 * animation, isDisableWireframe: true }
     )
 }
+
+const texture = new THREE.TextureLoader().load(bg);
 
 loader.load(
     '/static/star.glb',
@@ -75,8 +78,8 @@ loader.load(
         // camera.position.y = 1
         scene.add(camera)
 
-        // scene.background = texture
-        scene.background = new THREE.Color("green")
+        // createBg({color: "red"})
+        createBg({texture: texture})
 
 
         // Canvas
@@ -162,6 +165,15 @@ const createPlane = ({ x, y, z, width, height, isDisableWireframe, color, transp
 
     planeMesh.rotation.x = Math.PI / 2
     return planeMesh;
+}
+
+// --- 3. Create Background function 
+const createBg = ({ texture, color }) => {
+    if (texture) {
+        scene.background = texture
+    } else {
+        scene.background = new THREE.Color(color)
+    }
 }
 
 const onWindowResize = () => {
