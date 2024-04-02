@@ -78,7 +78,7 @@ loader.load(
         // camera.position.y = 1
         scene.add(camera)
 
-        // createBg({color: "red"})
+        // createBg({color: "lightblue"})
         createBg({texture: texture})
 
 
