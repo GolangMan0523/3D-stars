@@ -1,185 +1,67 @@
-import * as THREE from 'three'
+import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import bg from '/static/videoImg.png'
 
-let camera, scene, renderer;
-let loader = new GLTFLoader();
-let model;
+const controls = new OrbitControls(camera, renderer.domElement);
 
-const stars = []
+// Create a basic scene
+const scene = new THREE.Scene();
 
-const colors = ["red", "blue", "green", "white", "lightblue", "lightgreen"]
+// Set up camera
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 5, 10);
 
-const customRandom = (range, isNegative) => {
-    return isNegative ?
-        (Math.random() * 100000000) % range * Math.pow(-1, Math.floor(Math.random() * 100000000) % 10)
-        :
-        (Math.random() * 100000000) % range
-}
-
-for (let i = 0; i < 500; i++) {
-    const centerX = customRandom(100, true)
-    const centerY = customRandom(80, true)
-    const centerZ = customRandom(20, true)
-    const animation = customRandom(5, true)
-    const randomScale = customRandom(10, true)
-    const randomIndex = Math.floor(customRandom(6, false));
-    stars.push(
-        { centerX: centerX, centerY: centerY, centerZ: centerZ, scale: randomScale, color: colors[randomIndex], rotation: 10, animation: 0.005 * animation, isDisableWireframe: true }
-    )
-}
-
-const texture = new THREE.TextureLoader().load(bg);
-
-loader.load(
-    '/static/star.glb',
-    function (gltf) {
-        // To create a scene, use the Scene class:
-        scene = new THREE.Scene()
-
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight.position.set(10, 0, 10).normalize();
-        dirLight.color.setHSL(0.1, 0.7, 0.5);
-        scene.add(dirLight);
-
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight1.position.set(0, 10, 10).normalize();
-        // dirLight1.color.setHSL(0.1, 0.7, 0.5);
-        scene.add(dirLight1);
-
-        const dirLight2 = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight2.position.set(0, 10, -10).normalize();
-        // dirLight1.color.setHSL(0.1, 0.7, 0.5);
-        scene.add(dirLight2);
-
-        // Create a Plane
-        scene.add(createPlane({ x: 0, y: -10, z: -5, width: 100, height: 100, isDisableWireframe: true, color: "lightgreen", transparency: 0.5, }))
-
-        // Get the loaded model
-        model = gltf.scene;
-
-        const models = []
-        stars.forEach(star => {
-            const model = createStar(star)
-            models.push(model)
-            scene.add(model)
-        });
-
-        // Sizes
-        const sizes = {
-            width: window.innerWidth,
-            height: window.innerHeight
-        }
-
-        // Camera
-        camera = new THREE.PerspectiveCamera(120, sizes.width / sizes.height, 1, 100)
-        camera.position.z = 15
-        // camera.position.y = 1
-        scene.add(camera)
-
-        // createBg({color: "lightblue"})
-        createBg({texture: texture})
+// Set up renderer
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
 
-        // Canvas
-        const canvas = document.querySelector('canvas.webgl')
+// Create a plane geometry for the water
+const waterGeometry = new THREE.PlaneGeometry(10, 10, 100, 100);
 
-        // Renderer
-        renderer = new THREE.WebGLRenderer({
-            canvas: canvas
-        })
-        renderer.setSize(sizes.width, sizes.height)
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-
-        // Animation
-        const tick = () => {
-            let cameraPosition = camera.position;
-            models.forEach((model, i) => {
-                // mesh.rotation.x += stars[i].animation
-                // mesh.rotation.y += stars[i].animation
-                model.rotation.z += stars[i].animation
-                let modelPosition = model.position;
-                let distance = cameraPosition.distanceTo(modelPosition);
-                let boundingBox = new THREE.Box3().setFromObject(model);
-                let length = boundingBox.max.x - boundingBox.min.x;
-                if (distance < length) {
-                    model.visible = false
-                } else {
-                    model.visible = true
-                }
-            });
-            controls.update();
-            renderer.render(scene, camera)
-            window.requestAnimationFrame(tick)
-        }
-        tick()
-    },
-    function (xhr) {
-        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-    },
-    function (error) {
-        console.error('An error happened', error);
+// Shader material to simulate water effect
+const waterMaterial = new THREE.ShaderMaterial({
+    vertexShader: `
+    varying vec2 vUv;
+    uniform float time;
+    
+    void main() {
+      vUv = uv;
+      vec3 newPosition = position;
+      newPosition.z += sin((uv.x + uv.y) * 10.0 + time) * 0.1; // Create waves
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
     }
-);
-
-// --- 1. Create Start function 
-const createStar = ({ centerX, centerY, centerZ, scale, color, rotation, animation, isDisableWireframe }) => {
-    let cloneModel = model.clone();
-
-    // Change color of the model
-    cloneModel.traverse(function (child) {
-        if (child.isMesh) {
-            child.material = new THREE.MeshStandardMaterial({
-                color: color,
-                roughness: 0.6,
-                metalness: 0.6
-            })
-        }
-    });
-
-    // Scale the model
-    var scaleFactor = scale; // Scale factor
-    cloneModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
-    cloneModel.position.set(centerX, centerY, centerZ);
-    cloneModel.rotation.set(0, 0, rotation);
-
-    // Add the model to the scene
-    return cloneModel
-}
-
-// --- 2. Create Plane function 
-const createPlane = ({ x, y, z, width, height, isDisableWireframe, color, transparency, map }) => {
-    // Create a plane geometry
-    const planeGeometry = new THREE.PlaneGeometry(width, height, 32, 32); // Width, Height, Width segments, Height segments
-
-    // Create a material
-    const planeMaterial = new THREE.MeshPhongMaterial({ color: color, specular: 0xffffff, shininess: 40, side: THREE.DoubleSide, wireframe: !isDisableWireframe });
-
-    // Create a plane mesh
-    const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-    planeMesh.position.x = x
-    planeMesh.position.y = y
-    planeMesh.position.z = z
-
-    planeMesh.rotation.x = Math.PI / 2
-    return planeMesh;
-}
-
-// --- 3. Create Background function 
-const createBg = ({ texture, color }) => {
-    if (texture) {
-        scene.background = texture
-    } else {
-        scene.background = new THREE.Color(color)
+  `,
+    fragmentShader: `
+    varying vec2 vUv;
+    
+    void main() {
+      vec3 color = vec3(0.0, 0.3, 0.6) + vUv.x * 0.2; // Blueish color
+      gl_FragColor = vec4(color, 1.0);
     }
+  `,
+    uniforms: {
+        time: { value: 0 }
+    }
+});
+
+const water = new THREE.Mesh(waterGeometry, waterMaterial);
+water.rotation.x = -Math.PI / 2; // Make the plane horizontal
+scene.add(water);
+
+
+
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Update time to create wave animation
+    waterMaterial.uniforms.time.value += 0.05;
+
+    controls.update();
+
+    renderer.render(scene, camera);
 }
 
-const onWindowResize = () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
+animate();
 
-window.addEventListener('resize', onWindowResize);
