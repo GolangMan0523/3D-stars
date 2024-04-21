@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-const controls = new OrbitControls(camera, renderer.domElement);
 
 // Create a basic scene
 const scene = new THREE.Scene();
@@ -14,6 +13,7 @@ camera.position.set(0, 5, 10);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
 
 
 // Create a plane geometry for the water
