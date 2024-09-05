@@ -1,185 +1,122 @@
-import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import bg from '/static/videoImg.png'
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import bg from "/static/videoImg.png";
+
+// import * as THREE from "three";
 
 let camera, scene, renderer;
-let loader = new GLTFLoader();
-let model;
 
-const stars = []
+let isUserInteracting = false,
+  onPointerDownMouseX = 0,
+  onPointerDownMouseY = 0,
+  lon = 0,
+  onPointerDownLon = 0,
+  lat = 0,
+  onPointerDownLat = 0,
+  phi = 0,
+  theta = 0;
 
-const colors = ["red", "blue", "green", "white", "lightblue", "lightgreen"]
+init();
 
-const customRandom = (range, isNegative) => {
-    return isNegative ?
-        (Math.random() * 100000000) % range * Math.pow(-1, Math.floor(Math.random() * 100000000) % 10)
-        :
-        (Math.random() * 100000000) % range
+function init() {
+  const container = document.getElementById("container");
+
+  camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    1,
+    1100
+  );
+
+  scene = new THREE.Scene();
+
+  const geometry = new THREE.SphereGeometry(500, 60, 40);
+  // invert the geometry on the x-axis so that all of the faces point inward
+  geometry.scale(-1, 1, 1);
+
+  const texture = new THREE.TextureLoader().load("/static/panorama.jpg");
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.MeshBasicMaterial({ map: texture });
+
+  const mesh = new THREE.Mesh(geometry, material);
+
+  scene.add(mesh);
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setAnimationLoop(animate);
+  container.appendChild(renderer.domElement);
+
+  container.style.touchAction = "none";
+  container.addEventListener("pointerdown", onPointerDown);
+
+  document.addEventListener("wheel", onDocumentMouseWheel);
+
+  window.addEventListener("resize", onWindowResize);
 }
 
-for (let i = 0; i < 500; i++) {
-    const centerX = customRandom(100, true)
-    const centerY = customRandom(80, true)
-    const centerZ = customRandom(20, true)
-    const animation = customRandom(5, true)
-    const randomScale = customRandom(10, true)
-    const randomIndex = Math.floor(customRandom(6, false));
-    stars.push(
-        { centerX: centerX, centerY: centerY, centerZ: centerZ, scale: randomScale, color: colors[randomIndex], rotation: 10, animation: 0.005 * animation, isDisableWireframe: true }
-    )
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-const texture = new THREE.TextureLoader().load(bg);
+function onPointerDown(event) {
+  if (event.isPrimary === false) return;
 
-loader.load(
-    '/static/star.glb',
-    function (gltf) {
-        // To create a scene, use the Scene class:
-        scene = new THREE.Scene()
+  isUserInteracting = true;
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight.position.set(10, 0, 10).normalize();
-        dirLight.color.setHSL(0.1, 0.7, 0.5);
-        scene.add(dirLight);
+  onPointerDownMouseX = event.clientX;
+  onPointerDownMouseY = event.clientY;
 
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight1.position.set(0, 10, 10).normalize();
-        // dirLight1.color.setHSL(0.1, 0.7, 0.5);
-        scene.add(dirLight1);
+  onPointerDownLon = lon;
+  onPointerDownLat = lat;
 
-        const dirLight2 = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight2.position.set(0, 10, -10).normalize();
-        // dirLight1.color.setHSL(0.1, 0.7, 0.5);
-        scene.add(dirLight2);
-
-        // Create a Plane
-        scene.add(createPlane({ x: 0, y: -10, z: -5, width: 100, height: 100, isDisableWireframe: true, color: "lightgreen", transparency: 0.5, }))
-
-        // Get the loaded model
-        model = gltf.scene;
-
-        const models = []
-        stars.forEach(star => {
-            const model = createStar(star)
-            models.push(model)
-            scene.add(model)
-        });
-
-        // Sizes
-        const sizes = {
-            width: window.innerWidth,
-            height: window.innerHeight
-        }
-
-        // Camera
-        camera = new THREE.PerspectiveCamera(120, sizes.width / sizes.height, 1, 100)
-        camera.position.z = 15
-        // camera.position.y = 1
-        scene.add(camera)
-
-        // createBg({color: "lightblue"})
-        createBg({texture: texture})
-
-
-        // Canvas
-        const canvas = document.querySelector('canvas.webgl')
-
-        // Renderer
-        renderer = new THREE.WebGLRenderer({
-            canvas: canvas
-        })
-        renderer.setSize(sizes.width, sizes.height)
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-
-        // Animation
-        const tick = () => {
-            let cameraPosition = camera.position;
-            models.forEach((model, i) => {
-                // mesh.rotation.x += stars[i].animation
-                // mesh.rotation.y += stars[i].animation
-                model.rotation.z += stars[i].animation
-                let modelPosition = model.position;
-                let distance = cameraPosition.distanceTo(modelPosition);
-                let boundingBox = new THREE.Box3().setFromObject(model);
-                let length = boundingBox.max.x - boundingBox.min.x;
-                if (distance < length) {
-                    model.visible = false
-                } else {
-                    model.visible = true
-                }
-            });
-            controls.update();
-            renderer.render(scene, camera)
-            window.requestAnimationFrame(tick)
-        }
-        tick()
-    },
-    function (xhr) {
-        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-    },
-    function (error) {
-        console.error('An error happened', error);
-    }
-);
-
-// --- 1. Create Start function 
-const createStar = ({ centerX, centerY, centerZ, scale, color, rotation, animation, isDisableWireframe }) => {
-    let cloneModel = model.clone();
-
-    // Change color of the model
-    cloneModel.traverse(function (child) {
-        if (child.isMesh) {
-            child.material = new THREE.MeshStandardMaterial({
-                color: color,
-                roughness: 0.6,
-                metalness: 0.6
-            })
-        }
-    });
-
-    // Scale the model
-    var scaleFactor = scale; // Scale factor
-    cloneModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
-    cloneModel.position.set(centerX, centerY, centerZ);
-    cloneModel.rotation.set(0, 0, rotation);
-
-    // Add the model to the scene
-    return cloneModel
+  document.addEventListener("pointermove", onPointerMove);
+  document.addEventListener("pointerup", onPointerUp);
 }
 
-// --- 2. Create Plane function 
-const createPlane = ({ x, y, z, width, height, isDisableWireframe, color, transparency, map }) => {
-    // Create a plane geometry
-    const planeGeometry = new THREE.PlaneGeometry(width, height, 32, 32); // Width, Height, Width segments, Height segments
+function onPointerMove(event) {
+  if (event.isPrimary === false) return;
 
-    // Create a material
-    const planeMaterial = new THREE.MeshPhongMaterial({ color: color, specular: 0xffffff, shininess: 40, side: THREE.DoubleSide, wireframe: !isDisableWireframe });
-
-    // Create a plane mesh
-    const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-    planeMesh.position.x = x
-    planeMesh.position.y = y
-    planeMesh.position.z = z
-
-    planeMesh.rotation.x = Math.PI / 2
-    return planeMesh;
+  lon = (onPointerDownMouseX - event.clientX) * 0.1 + onPointerDownLon;
+  lat = (event.clientY - onPointerDownMouseY) * 0.1 + onPointerDownLat;
 }
 
-// --- 3. Create Background function 
-const createBg = ({ texture, color }) => {
-    if (texture) {
-        scene.background = texture
-    } else {
-        scene.background = new THREE.Color(color)
-    }
+function onPointerUp() {
+  if (event.isPrimary === false) return;
+
+  isUserInteracting = false;
+
+  document.removeEventListener("pointermove", onPointerMove);
+  document.removeEventListener("pointerup", onPointerUp);
 }
 
-const onWindowResize = () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+function onDocumentMouseWheel(event) {
+  const fov = camera.fov + event.deltaY * 0.05;
+
+  camera.fov = THREE.MathUtils.clamp(fov, 10, 75);
+
+  camera.updateProjectionMatrix();
 }
 
-window.addEventListener('resize', onWindowResize);
+function animate() {
+  if (isUserInteracting === false) {
+    lon += 0.1;
+  }
+
+  lat = Math.max(-85, Math.min(85, lat));
+  phi = THREE.MathUtils.degToRad(90 - lat);
+  theta = THREE.MathUtils.degToRad(lon);
+
+  const x = 500 * Math.sin(phi) * Math.cos(theta);
+  const y = 500 * Math.cos(phi);
+  const z = 500 * Math.sin(phi) * Math.sin(theta);
+
+  camera.lookAt(x, y, z);
+
+  renderer.render(scene, camera);
+}

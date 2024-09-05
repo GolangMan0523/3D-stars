@@ -1,19 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>3D stars</title>
+    <style>
+      body {
+        margin: 0;
+      }
+    </style>
+  </head>
 
-<head>
-	<meta charset="utf-8">
-	<title>3D stars</title>
-	<style>
-		body {
-			margin: 0;
-		}
-	</style>
-</head>
-
-<body>
-	<canvas class="webgl"></canvas>
-	<script type="module" src="/main.js"></script>
-</body>
-
+  <body>
+    <!-- <canvas class="webgl"></canvas> -->
+    <div id="container"></div>
+    <div id="info">
+      <a href="https://threejs.org" target="_blank" rel="noopener"
+        >three.js webgl</a
+      >
+      - equirectangular panorama demo. photo by
+      <a
+        href="http://www.flickr.com/photos/jonragnarsson/2294472375/"
+        target="_blank"
+        rel="noopener"
+        >Jón Ragnarsson</a
+      >
+    </div>
+    <script type="module" src="/main.js"></script>
+  </body>
 </html>
